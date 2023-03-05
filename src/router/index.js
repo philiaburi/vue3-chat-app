@@ -1,6 +1,10 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import HomeView from "../views/HomeView.vue";
+import SignupView from "@/views/SignupView.vue";
+import LoginView from "@/views/LoginView.vue";
+import HomeView from "@/views/HomeView.vue";
 
+import { auth } from "../plugins/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 const routes = [
   {
     path: "/",
@@ -8,19 +12,34 @@ const routes = [
     component: HomeView,
   },
   {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
+    path: "/signup",
+    name: "signup",
+    component: SignupView,
+  },
+  {
+    path: "/login",
+    name: "login",
+    component: LoginView,
   },
 ];
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
+});
+
+router.beforeEach(async (to) => {
+  const isLogin = await new Promise((resoleve) => {
+    onAuthStateChanged(auth, (user) => {
+      resoleve(!!user);
+    });
+  });
+
+  const isRequiresAuth = to.name === "home";
+  if (isRequiresAuth && !isLogin) {
+    // ログインしていない場合、/loginページに遷移させる
+    return { name: "login" };
+  }
 });
 
 export default router;
